@@ -87,6 +87,7 @@ function session(options){
     , name = options.name || options.key || 'connect.sid'
     , store = options.store || new MemoryStore
     , cookie = options.cookie || {}
+    , cookieString = JSON.stringify(cookie)
     , trustProxy = options.proxy
     , storeReady = true
     , rollingSessions = options.rolling || false;
@@ -126,7 +127,12 @@ function session(options){
   store.generate = function(req){
     req.sessionID = generateId(req);
     req.session = new Session(req);
-    req.session.cookie = new Cookie(cookie);
+    var reqCookie = JSON.parse(cookieString);
+    var sharedAuthDomain = Conf.branded(req, 'sharedAuthCookieDomain');
+    if(sharedAuthCookieDomain) {
+        reqCookie.domain = sharedAuthCookieDomain;
+    }
+    req.session.cookie = new Cookie(reqCookie);
   };
 
   store.on('disconnect', function(){ storeReady = false; });
